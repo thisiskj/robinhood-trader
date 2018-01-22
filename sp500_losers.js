@@ -24,5 +24,5 @@ const robinhood = new RobinHood();
 
   let fs = require('fs');
   let fileName = 'sp_500_losers-' + moment().format("YYYY-MM-DD-h:mm:ss-a")
-  fs.writeFile(`storage/${fileName}.json`, JSON.stringify(saveme));
+  fs.writeFile(`${__dirname}/storage/${fileName}.json`, JSON.stringify(saveme));
 })();
