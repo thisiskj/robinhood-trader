@@ -1,0 +1,19 @@
+{
+  "name": "robinhood-trader",
+  "version": "1.0.0",
+  "description": "Robinhood Trader",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "thisiskj",
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^4.0.0",
+    "lodash": "^4.17.4",
+    "moment": "^2.20.1",
+    "node-localstorage": "^1.3.0",
+    "pushover-notifications": "^1.0.0",
+    "robinhood-api": "^1.2.3"
+  }
+}
