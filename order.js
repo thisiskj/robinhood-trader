@@ -3,6 +3,7 @@ require('dotenv').config()
 const { log, pushLog } = require('./logging')
 const RobinHood = require('./robinhood-api');
 const robinhood = new RobinHood();
+const moment = require('moment-timezone');
 
 // Validate username/password exists
 if (!process.env.ROBINHOOD_USERNAME || !process.env.ROBINHOOD_PASSWORD) {
@@ -69,6 +70,9 @@ if (!process.env.ROBINHOOD_USERNAME || !process.env.ROBINHOOD_PASSWORD) {
       log('order:', o)
     } while (o.state == 'queued');
 
+    log('BUY has completed')
+    await sleep(1000)
+
     // Place sell order at 1% gain
     let sell = {
       account: account.url,
@@ -85,7 +89,60 @@ if (!process.env.ROBINHOOD_USERNAME || !process.env.ROBINHOOD_PASSWORD) {
     let sellOrder = await robinhood.placeOrder(sell)
     log('sellOrder:', sellOrder)
 
-    log("Script complete, good luck!")
+    log("Now we wait for it to complete, good luck!")
+
+    do {
+      log('Sleeping for 10s...')
+      await sleep(1000 * 10)
+
+      let now = moment().tz("America/New_York").format('H:mm');
+
+      let s = await robinhood.getOrder({ order_id: sellOrder.id })
+      log(s)
+      log('Sell order status is', s.state)
+
+      if (s.state == 'filled') {
+        log('Order has been filled, congrats!')
+        break
+      }
+
+      // Need a dropoff calculation here...
+      // 9:45am Maybe accept a 0.95% return
+      // 9:50am Maybe accept a 0.90% return
+
+      // 9:59am End of allocated time.
+      if (now == '9:59') {
+        log('Its 9:59, time to end')
+
+        // Cancel sell order
+        let cancel = await robinhood.cancelOrder({ order_id: sellOrder.id })
+        log('Canceled order:', cancel)
+
+        // Sleep
+        log('Sleeping 10s...')
+        await sleep(1000 * 10)
+
+        // Place market sell order
+        let marketSell = {
+          account: account.url,
+          instrument: security.instrument,
+          symbol: security.symbol,
+          type: 'market',
+          time_in_force: 'gtc',
+          trigger: 'immediate',
+          quantity: quantity,
+          side: 'sell',
+        }
+        log("Submitting market SELL:", marketSell)
+        let marketSellOrder = await robinhood.placeOrder(marketSell)
+        log('marketSellOrder:', marketSellOrder)
+
+        // Break
+        break
+      }
+    } while (true)
+
+    log('Goodbye!')
 
     // Samples...
 

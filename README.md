@@ -10,18 +10,14 @@ Once the .env file is configured, proceed...
 ```
 npm install
 node order.js
-
-...[30 mins later]
-
-node checkup.js
 ```
 
 ## Process
-### Step 1: Place Order (order.js)
 
 **Warning: This is a Work In Progress, use at your own risk**
 
-Will run at 9:25am
+### Step 1: Place Order
+You should run at 9:29am EST
 
 1. Find worst performing stock
 1. Get account balance
@@ -29,9 +25,9 @@ Will run at 9:25am
 1. Wait for buy order to complete
 1. Place sell order
 
-### Step 2: Checkup (checkup.js)
+### Step 2: Checkup
 
-Checkup will run at 9:59am
+Checkup will run until 9:59am
 
-1. If sell order has not executed, cancel it
-1. Submit a market order??
+1. If sell order has not executed by 9:59am, cancel it
+1. Submit a market order
