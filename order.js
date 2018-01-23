@@ -35,10 +35,10 @@ if (!process.env.ROBINHOOD_USERNAME || !process.env.ROBINHOOD_PASSWORD) {
     let security = await robinhood.getQuote({ symbol: worst.symbol })
 
     // See if we have enough money
-    // if (parseFloat(account.buying_power) < parseFloat(security.bid_price)) {
-    //   pushLog("Not enough funds ($" + account.buying_power + ") in account to buy " + worst.symbol + " at $" + security.bid_price)
-    //   return
-    // }
+    if (parseFloat(account.buying_power) < parseFloat(security.bid_price)) {
+      pushLog("Not enough funds ($" + account.buying_power + ") in account to buy " + worst.symbol + " at $" + security.bid_price)
+      return
+    }
 
     // Determine how much we want to buy
     let quantity = Math.floor(account.buying_power / security.bid_price)
@@ -85,6 +85,7 @@ if (!process.env.ROBINHOOD_USERNAME || !process.env.ROBINHOOD_PASSWORD) {
     let sellOrder = await robinhood.placeOrder(sell)
     log('sellOrder:', sellOrder)
 
+    log("Script complete, good luck!")
 
     // Samples...
 
