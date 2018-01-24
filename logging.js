@@ -1,10 +1,11 @@
+require('dotenv').config()
 const PushoverNotifications = require( 'pushover-notifications' )
 const moment = require('moment');
 
 // Connect to pushover
 const pushover = new PushoverNotifications({
-  user: 'uUWBxnaR8975vVVSx7fCFbMjd6RFEe',
-  token: 'abivuw6oqy2nespv6bwtt17bzim1oj',
+  user: process.env.PUSHOVER_USER,
+  token: process.env.PUSHOVER_TOKEN
 })
 
 // Stdout logger

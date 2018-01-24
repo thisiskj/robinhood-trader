@@ -34,6 +34,8 @@ if (!process.env.ROBINHOOD_USERNAME || !process.env.ROBINHOOD_PASSWORD) {
 
     // Get the current quote data for the worst loser
     let security = await robinhood.getQuote({ symbol: worst.symbol })
+    log('worst security quote:', security)
+    process.exit(1);
 
     // See if we have enough money
     if (parseFloat(account.buying_power) < parseFloat(security.bid_price)) {
@@ -42,7 +44,7 @@ if (!process.env.ROBINHOOD_USERNAME || !process.env.ROBINHOOD_PASSWORD) {
     }
 
     // Determine how much we want to buy
-    let quantity = Math.floor(account.buying_power / security.bid_price)
+    let quantity = Math.floor(account.buying_power / security.last_trade_price)
     log("Attempting to buy", quantity, "shares of", worst.symbol, "at $", security.bid_price, "per share")
 
     // Place order
@@ -53,7 +55,7 @@ if (!process.env.ROBINHOOD_USERNAME || !process.env.ROBINHOOD_PASSWORD) {
       type: 'limit',
       time_in_force: 'gtc',
       trigger: 'immediate',
-      price: security.bid_price,
+      price: security.last_trade_price,
       quantity: quantity,
       side: 'buy',
     }
@@ -68,7 +70,7 @@ if (!process.env.ROBINHOOD_USERNAME || !process.env.ROBINHOOD_PASSWORD) {
       await sleep(1000)
       o = await robinhood.getOrder({ order_id: buyOrder.id })
       log('order:', o)
-    } while (o.state == 'queued');
+    } while (o.state != 'filled');
 
     log('BUY has completed')
     await sleep(1000)
@@ -81,7 +83,7 @@ if (!process.env.ROBINHOOD_USERNAME || !process.env.ROBINHOOD_PASSWORD) {
       type: 'limit',
       time_in_force: 'gtc',
       trigger: 'immediate',
-      price: security.bid_price * 1.01,
+      price: round(security.last_trade_price * 1.01, 2),
       quantity: quantity,
       side: 'sell',
     }
@@ -106,13 +108,13 @@ if (!process.env.ROBINHOOD_USERNAME || !process.env.ROBINHOOD_PASSWORD) {
         break
       }
 
-      // Need a dropoff calculation here...
-      // 9:45am Maybe accept a 0.95% return
-      // 9:50am Maybe accept a 0.90% return
+      // Get current quote
+      let currentSecurity = await robinhood.getQuote({ symbol: security.symbol })
+      let currentReturn = (currentSecurity.last_trade_price - security.last_trade_price) / security.last_trade_price * 100
+      log(`Current price of ${security.symbol} is $${currentSecurity.last_trade_price} for a return of ${currentReturn}%`)
 
-      // 9:59am End of allocated time.
-      if (now == '9:59') {
-        log('Its 9:59, time to end')
+      // If its dropped 1.5%, then bail
+      if (currentReturn < -1.50) {
 
         // Cancel sell order
         let cancel = await robinhood.cancelOrder({ order_id: sellOrder.id })
@@ -137,9 +139,43 @@ if (!process.env.ROBINHOOD_USERNAME || !process.env.ROBINHOOD_PASSWORD) {
         let marketSellOrder = await robinhood.placeOrder(marketSell)
         log('marketSellOrder:', marketSellOrder)
 
-        // Break
         break
       }
+
+      // Need a dropoff calculation here...
+      // 9:45am Maybe accept a 0.95% return
+      // 9:50am Maybe accept a 0.90% return
+
+      // 9:59am End of allocated time.
+      // if (now == '9:59') {
+      //   log('Its 9:59, time to end')
+      //
+      //   // Cancel sell order
+      //   let cancel = await robinhood.cancelOrder({ order_id: sellOrder.id })
+      //   log('Canceled order:', cancel)
+      //
+      //   // Sleep
+      //   log('Sleeping 10s...')
+      //   await sleep(1000 * 10)
+      //
+      //   // Place market sell order
+      //   let marketSell = {
+      //     account: account.url,
+      //     instrument: security.instrument,
+      //     symbol: security.symbol,
+      //     type: 'market',
+      //     time_in_force: 'gtc',
+      //     trigger: 'immediate',
+      //     quantity: quantity,
+      //     side: 'sell',
+      //   }
+      //   log("Submitting market SELL:", marketSell)
+      //   let marketSellOrder = await robinhood.placeOrder(marketSell)
+      //   log('marketSellOrder:', marketSellOrder)
+      //
+      //   // Break
+      //   break
+      // }
     } while (true)
 
     log('Goodbye!')
@@ -177,4 +213,12 @@ if (!process.env.ROBINHOOD_USERNAME || !process.env.ROBINHOOD_PASSWORD) {
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+function round(number, precision) {
+    precision = (typeof precision === 'undefined') ? 2 : precision
+    var factor = Math.pow(10, precision);
+    var tempNumber = number * factor;
+    var roundedTempNumber = Math.round(tempNumber);
+    return roundedTempNumber / factor;
 }
