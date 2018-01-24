@@ -35,7 +35,6 @@ if (!process.env.ROBINHOOD_USERNAME || !process.env.ROBINHOOD_PASSWORD) {
     // Get the current quote data for the worst loser
     let security = await robinhood.getQuote({ symbol: worst.symbol })
     log('worst security quote:', security)
-    process.exit(1);
 
     // See if we have enough money
     if (parseFloat(account.buying_power) < parseFloat(security.bid_price)) {
