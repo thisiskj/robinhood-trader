@@ -1,7 +1,7 @@
 // Imports
 require('dotenv').config()
 const { log, pushLog } = require('./logging')
-const RobinHood = require('./node_modules/robinhood-api');
+const RobinHood = require('robinhood-api');
 const robinhood = new RobinHood();
 const moment = require('moment-timezone');
 
