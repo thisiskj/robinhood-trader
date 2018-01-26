@@ -26,7 +26,7 @@ if (!process.env.ROBINHOOD_USERNAME || !process.env.ROBINHOOD_PASSWORD) {
 
     // Get S&P 500 Losers
     log('Getting Top 10 S&P 500 losers...')
-    let sp500down = await robinhood.getSP500Movers({ direction: 'down' })
+    let sp500down = await robinhood.getSP500Movers({ direction: 'up' })
     sp500down.results.forEach((res) => { log(res.symbol, res.price_movement.market_hours_last_movement_pct + '%', '$' + res.price_movement.market_hours_last_price) })
 
     // Get the worst loser
