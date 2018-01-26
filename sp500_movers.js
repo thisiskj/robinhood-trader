@@ -23,7 +23,7 @@ const fs = require('fs');
     })
   }
 
-  let fileName = 'sp_500_up-' + moment().format("YYYY-MM-DD-h:mm:ss-a")
+  let fileName = 'sp_500_down-' + moment().format("YYYY-MM-DD-h:mm:ss-a")
   fs.writeFile(`${__dirname}/storage/${fileName}.json`, JSON.stringify(saveme));
   
   log('Getting Top 10 S&P 500 winners...')
