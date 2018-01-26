@@ -141,71 +141,10 @@ if (!process.env.ROBINHOOD_USERNAME || !process.env.ROBINHOOD_PASSWORD) {
 
         break
       }
-
-      // Need a dropoff calculation here...
-      // 9:45am Maybe accept a 0.95% return
-      // 9:50am Maybe accept a 0.90% return
-
-      // 9:59am End of allocated time.
-      // if (now == '9:59') {
-      //   log('Its 9:59, time to end')
-      //
-      //   // Cancel sell order
-      //   let cancel = await robinhood.cancelOrder({ order_id: sellOrder.id })
-      //   log('Canceled order:', cancel)
-      //
-      //   // Sleep
-      //   log('Sleeping 10s...')
-      //   await sleep(1000 * 10)
-      //
-      //   // Place market sell order
-      //   let marketSell = {
-      //     account: account.url,
-      //     instrument: security.instrument,
-      //     symbol: security.symbol,
-      //     type: 'market',
-      //     time_in_force: 'gtc',
-      //     trigger: 'immediate',
-      //     quantity: quantity,
-      //     side: 'sell',
-      //   }
-      //   log("Submitting market SELL:", marketSell)
-      //   let marketSellOrder = await robinhood.placeOrder(marketSell)
-      //   log('marketSellOrder:', marketSellOrder)
-      //
-      //   // Break
-      //   break
-      // }
     } while (true)
 
     log('Goodbye!')
 
-    // Samples...
-
-    // let orders = await robinhood.getRecentOrders()
-    // log('orders:', orders)
-
-    // let o = await robinhood.getOrder({ order_id: '0e435744-d254-4570-8f26-fe4855c3cc35' })
-    // log('order:', o)
-
-    // let cancel = await robinhood.cancelOrder({ order_id: '0e435744-d254-4570-8f26-fe4855c3cc35' })
-    // log('canceled order:', cancel)
-
-    // o = await robinhood.getOrder({ order_id: '0e435744-d254-4570-8f26-fe4855c3cc35' })
-    // log('order:', o)
-
-    // let order = await robinhood.placeOrder({
-    //   account: account.url,
-    //   instrument: assetARGS.instrument,
-    //   symbol: 'ARGS',
-    //   type: 'limit',
-    //   time_in_force: 'gtc',
-    //   trigger: 'immediate',
-    //   price: 2.10,
-    //   quantity: 1,
-    //   side: 'buy',
-    // })
-    // log('order', order)
   } catch (e) {
     log(e)
   }
