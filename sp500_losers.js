@@ -2,7 +2,7 @@
 require('dotenv').config()
 const moment = require('moment');
 const { log, pushLog } = require('./logging')
-const RobinHood = require('./robinhood-api');
+const RobinHood = require('robinhood-api');
 const robinhood = new RobinHood();
 
 // Get S&P 500 Losers
