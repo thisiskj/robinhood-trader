@@ -11,6 +11,17 @@ Once the .env file is configured, proceed...
 npm install
 node order.js
 ```
+## Alternative Docker Setup
+
+Build Docker Container
+```
+docker build . -t testrobinhood 
+```
+
+Run Docker Container
+```
+docker run -e ROBINHOOD_USERNAME=you@example.com -e ROBINHOOD_PASSWORD=password testrobinhood
+```
 
 ## Process
 
