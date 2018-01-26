@@ -4,6 +4,10 @@ Setup a `.env` file
 ```
 ROBINHOOD_USERNAME=you@example.com
 ROBINHOOD_PASSWORD=password
+
+# Optional for pushover notifications
+PUSHOVER_USER=xxx
+PUSHOVER_TOKEN=yyy
 ```
 
 Once the .env file is configured, proceed...

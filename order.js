@@ -71,7 +71,7 @@ if (!process.env.ROBINHOOD_USERNAME || !process.env.ROBINHOOD_PASSWORD) {
       log('order:', o)
     } while (o.state != 'filled');
 
-    log('BUY has completed')
+    pushLog(`Buy of ${security.symbol} has completed for ${security.last_trade_price}`)
     await sleep(1000)
 
     // Place sell order at 1% gain
@@ -103,7 +103,7 @@ if (!process.env.ROBINHOOD_USERNAME || !process.env.ROBINHOOD_PASSWORD) {
       log('Sell order status is', s.state)
 
       if (s.state == 'filled') {
-        log('Order has been filled, congrats!')
+        pushLog(`Sell order for 1% gain has been filled, congrats!`)
         break
       }
 
@@ -137,6 +137,7 @@ if (!process.env.ROBINHOOD_USERNAME || !process.env.ROBINHOOD_PASSWORD) {
         log("Submitting market SELL:", marketSell)
         let marketSellOrder = await robinhood.placeOrder(marketSell)
         log('marketSellOrder:', marketSellOrder)
+        pushLog(`Return is < -1.5%, market sell order placed`)
 
         break
       }
