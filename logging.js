@@ -3,10 +3,13 @@ const PushoverNotifications = require( 'pushover-notifications' )
 const moment = require('moment');
 
 // Connect to pushover
-const pushover = new PushoverNotifications({
-  user: process.env.PUSHOVER_USER,
-  token: process.env.PUSHOVER_TOKEN
-})
+let pushover = null
+if (process.env.PUSHOVER_USER && process.env.PUSHOVER_TOKEN) {
+  pushover = new PushoverNotifications({
+    user: process.env.PUSHOVER_USER,
+    token: process.env.PUSHOVER_TOKEN
+  })
+}
 
 // Stdout logger
 function log() {
@@ -16,12 +19,14 @@ function log() {
 // Pushover + stdout logger
 function pushLog() {
   // Send to pushover
-  pushover.send({
-    message: Object.values(arguments).join(' '),
-    title: "Robinhood Trader",
-  }, function( err, result ) {
-    if (err) { log(err) }
-  })
+  if (pushover) {
+    pushover.send({
+      message: Object.values(arguments).join(' '),
+      title: "Robinhood Trader",
+    }, function( err, result ) {
+      if (err) { log(err) }
+    })
+  }
 
   // stdout log
   log(...arguments)

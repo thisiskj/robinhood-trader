@@ -26,7 +26,7 @@ if (!process.env.ROBINHOOD_USERNAME || !process.env.ROBINHOOD_PASSWORD) {
 
     // Get S&P 500 Losers
     log('Getting Top 10 S&P 500 losers...')
-    let sp500down = await robinhood.getSP500Movers({ direction: 'down' })
+    let sp500down = await robinhood.getSP500Movers({ direction: 'up' })
     sp500down.results.forEach((res) => { log(res.symbol, res.price_movement.market_hours_last_movement_pct + '%', '$' + res.price_movement.market_hours_last_price) })
 
     // Get the worst loser
@@ -71,7 +71,7 @@ if (!process.env.ROBINHOOD_USERNAME || !process.env.ROBINHOOD_PASSWORD) {
       log('order:', o)
     } while (o.state != 'filled');
 
-    log('BUY has completed')
+    pushLog(`Buy of ${security.symbol} has completed for ${security.last_trade_price}`)
     await sleep(1000)
 
     // Place sell order at 1% gain
@@ -103,7 +103,7 @@ if (!process.env.ROBINHOOD_USERNAME || !process.env.ROBINHOOD_PASSWORD) {
       log('Sell order status is', s.state)
 
       if (s.state == 'filled') {
-        log('Order has been filled, congrats!')
+        pushLog(`Sell order for 1% gain has been filled, congrats!`)
         break
       }
 
@@ -137,74 +137,14 @@ if (!process.env.ROBINHOOD_USERNAME || !process.env.ROBINHOOD_PASSWORD) {
         log("Submitting market SELL:", marketSell)
         let marketSellOrder = await robinhood.placeOrder(marketSell)
         log('marketSellOrder:', marketSellOrder)
+        pushLog(`Return is < -1.5%, market sell order placed`)
 
         break
       }
-
-      // Need a dropoff calculation here...
-      // 9:45am Maybe accept a 0.95% return
-      // 9:50am Maybe accept a 0.90% return
-
-      // 9:59am End of allocated time.
-      // if (now == '9:59') {
-      //   log('Its 9:59, time to end')
-      //
-      //   // Cancel sell order
-      //   let cancel = await robinhood.cancelOrder({ order_id: sellOrder.id })
-      //   log('Canceled order:', cancel)
-      //
-      //   // Sleep
-      //   log('Sleeping 10s...')
-      //   await sleep(1000 * 10)
-      //
-      //   // Place market sell order
-      //   let marketSell = {
-      //     account: account.url,
-      //     instrument: security.instrument,
-      //     symbol: security.symbol,
-      //     type: 'market',
-      //     time_in_force: 'gtc',
-      //     trigger: 'immediate',
-      //     quantity: quantity,
-      //     side: 'sell',
-      //   }
-      //   log("Submitting market SELL:", marketSell)
-      //   let marketSellOrder = await robinhood.placeOrder(marketSell)
-      //   log('marketSellOrder:', marketSellOrder)
-      //
-      //   // Break
-      //   break
-      // }
     } while (true)
 
     log('Goodbye!')
 
-    // Samples...
-
-    // let orders = await robinhood.getRecentOrders()
-    // log('orders:', orders)
-
-    // let o = await robinhood.getOrder({ order_id: '0e435744-d254-4570-8f26-fe4855c3cc35' })
-    // log('order:', o)
-
-    // let cancel = await robinhood.cancelOrder({ order_id: '0e435744-d254-4570-8f26-fe4855c3cc35' })
-    // log('canceled order:', cancel)
-
-    // o = await robinhood.getOrder({ order_id: '0e435744-d254-4570-8f26-fe4855c3cc35' })
-    // log('order:', o)
-
-    // let order = await robinhood.placeOrder({
-    //   account: account.url,
-    //   instrument: assetARGS.instrument,
-    //   symbol: 'ARGS',
-    //   type: 'limit',
-    //   time_in_force: 'gtc',
-    //   trigger: 'immediate',
-    //   price: 2.10,
-    //   quantity: 1,
-    //   side: 'buy',
-    // })
-    // log('order', order)
   } catch (e) {
     log(e)
   }
