@@ -14,14 +14,15 @@ const fs = require('fs');
     fs.mkdirSync(dir);
   }
 
-  let saveme = []
+  let savemeDown = []
+  let savemeUp = []
 
   log('Getting Top 10 S&P 500 losers...')
   let sp500down = await robinhood.getSP500Movers({ direction: 'down' })
 
   for (res of sp500down.results) {
     let quote = await robinhood.getQuote({ symbol: res.symbol })
-    saveme.push({
+    savemeDown.push({
       symbol: res.symbol,
       last_pct: res.price_movement.market_hours_last_movement_pct,
       last_price: res.price_movement.market_hours_last_price,
@@ -29,15 +30,16 @@ const fs = require('fs');
     })
   }
 
-  let fileName = 'sp_500_down-' + moment().format("YYYY-MM-DD-h:mm:ss-a")
-  fs.writeFile(`${__dirname}/storage/${fileName}.json`, JSON.stringify(saveme));
+  const formattedDown = JSON.stringify(savemeDown, null, 4);
+  const downFileName = `sp_500_down-${moment().format("YYYY-MM-DD-h:mm:ss-a")}`;
+  fs.writeFile(`${__dirname}/storage/${downFileName}.json`, formattedDown);
 
   log('Getting Top 10 S&P 500 winners...')
   let sp500Up = await robinhood.getSP500Movers({ direction: 'up' })
 
   for (res of sp500Up.results) {
     let quote = await robinhood.getQuote({ symbol: res.symbol })
-    saveme.push({
+    savemeUp.push({
       symbol: res.symbol,
       last_pct: res.price_movement.market_hours_last_movement_pct,
       last_price: res.price_movement.market_hours_last_price,
@@ -45,6 +47,7 @@ const fs = require('fs');
     })
   }
 
-  fileName = 'sp_500_up-' + moment().format("YYYY-MM-DD-h:mm:ss-a")
-  fs.writeFile(`${__dirname}/storage/${fileName}.json`, JSON.stringify(saveme));
+  const formattedUp = JSON.stringify(savemeUp, null, 4);
+  const upFileName = `sp_500_up-${moment().format("YYYY-MM-DD-h:mm:ss-a")}`;
+  fs.writeFile(`${__dirname}/storage/${upFileName}.json`, formattedUp);
 })();
