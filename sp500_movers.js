@@ -18,10 +18,10 @@ const fs = require('fs');
   let savemeUp = []
 
   log('Getting Top 10 S&P 500 losers...')
-  let sp500down = await robinhood.getSP500Movers({ direction: 'down' })
+  const sp500down = await robinhood.getSP500Movers({ direction: 'down' })
 
   for (res of sp500down.results) {
-    let quote = await robinhood.getQuote({ symbol: res.symbol })
+    const quote = await robinhood.getQuote({ symbol: res.symbol })
     savemeDown.push({
       symbol: res.symbol,
       last_pct: res.price_movement.market_hours_last_movement_pct,
@@ -35,10 +35,10 @@ const fs = require('fs');
   fs.writeFile(`${__dirname}/storage/${downFileName}.json`, formattedDown);
 
   log('Getting Top 10 S&P 500 winners...')
-  let sp500Up = await robinhood.getSP500Movers({ direction: 'up' })
+  const sp500Up = await robinhood.getSP500Movers({ direction: 'up' })
 
   for (res of sp500Up.results) {
-    let quote = await robinhood.getQuote({ symbol: res.symbol })
+    const quote = await robinhood.getQuote({ symbol: res.symbol })
     savemeUp.push({
       symbol: res.symbol,
       last_pct: res.price_movement.market_hours_last_movement_pct,
