@@ -8,6 +8,12 @@ const fs = require('fs');
 
 // Get S&P 500 Losers
 (async () => {
+  // create `storage` directory if it does not exist
+  const dir = `${__dirname}/storage`;
+  if (!fs.existsSync(dir)){
+    fs.mkdirSync(dir);
+  }
+
   let saveme = []
 
   log('Getting Top 10 S&P 500 losers...')
@@ -25,7 +31,7 @@ const fs = require('fs');
 
   let fileName = 'sp_500_down-' + moment().format("YYYY-MM-DD-h:mm:ss-a")
   fs.writeFile(`${__dirname}/storage/${fileName}.json`, JSON.stringify(saveme));
-  
+
   log('Getting Top 10 S&P 500 winners...')
   let sp500Up = await robinhood.getSP500Movers({ direction: 'up' })
 
