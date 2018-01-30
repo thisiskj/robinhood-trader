@@ -19,7 +19,7 @@ node order.js
 
 Build Docker Container
 ```
-docker build . -t testrobinhood 
+docker build . -t testrobinhood
 ```
 
 Run Docker Container
@@ -40,3 +40,9 @@ You should run at 9:31am EST
 1. Wait for buy order to complete
 1. Place sell order at 1% gain
 1. Watch the price and if we see a -1.5% loss, sumbit a market sell order
+
+
+### Todo:
+From: https://www.npmjs.com/package/robinhood-api
+`robinhood.getCompaniesReportingEarningsWithin(opts)`
+`robinhood.getFundamentals(opts)`
