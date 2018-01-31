@@ -54,7 +54,7 @@ if (!process.env.ROBINHOOD_USERNAME || !process.env.ROBINHOOD_PASSWORD) {
       type: 'limit',
       time_in_force: 'gtc',
       trigger: 'immediate',
-      price: security.last_trade_price,
+      price: round(security.last_trade_price, 2),
       quantity: quantity,
       side: 'buy',
     }
