@@ -29,6 +29,8 @@ require('console.table');
   const symbols = $(".wikitable").first().find('td:first-child').map((i, td) => $(td).text()).get()
   // console.log(symbols)
 
+  log("Getting top gainers from S&P 500...")
+
   // Get top gainers
   let quotes = await robinhood.getQuotes({ symbols: symbols.join(',') })
   quotes = _.chain(quotes.results)
