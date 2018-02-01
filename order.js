@@ -1,3 +1,7 @@
+//
+// This is the main script that will attempt to make a 1% profit
+//
+
 // Imports
 require('dotenv').config()
 const { log, pushLog } = require('./logging')
@@ -24,27 +28,30 @@ if (!process.env.ROBINHOOD_USERNAME || !process.env.ROBINHOOD_PASSWORD) {
     let accounts = await robinhood.getAccounts()
     let account = accounts.results[0]
 
-    // Get S&P 500 Losers
-    log('Getting Top 10 S&P 500 losers...')
-    let sp500down = await robinhood.getSP500Movers({ direction: 'up' })
-    sp500down.results.forEach((res) => { log(res.symbol, res.price_movement.market_hours_last_movement_pct + '%', '$' + res.price_movement.market_hours_last_price) })
+    log('Sleeping 3s...')
+    await sleep(3000)
 
-    // Get the worst loser
-    let worst = sp500down.results[0]
+    // Get S&P 500 winners
+    log('Getting Top 10 S&P 500 winners...')
+    let sp500 = await robinhood.getSP500Movers({ direction: 'up' })
+    sp500.results.forEach((res) => { log(res.symbol, res.price_movement.market_hours_last_movement_pct + '%', '$' + res.price_movement.market_hours_last_price) })
 
-    // Get the current quote data for the worst loser
-    let security = await robinhood.getQuote({ symbol: worst.symbol })
-    log('worst security quote:', security)
+    // Get the top
+    let top = sp500.results[0]
+
+    // Get the current quote data for the top loser
+    let security = await robinhood.getQuote({ symbol: top.symbol })
+    log('top security quote:', security)
 
     // See if we have enough money
     if (parseFloat(account.buying_power) < parseFloat(security.bid_price)) {
-      pushLog("Not enough funds ($" + account.buying_power + ") in account to buy " + worst.symbol + " at $" + security.bid_price)
+      pushLog("Not enough funds ($" + account.buying_power + ") in account to buy " + top.symbol + " at $" + security.bid_price)
       return
     }
 
     // Determine how much we want to buy
     let quantity = Math.floor(account.buying_power / security.last_trade_price)
-    log("Attempting to buy", quantity, "shares of", worst.symbol, "at $", security.bid_price, "per share")
+    log("Attempting to buy", quantity, "shares of", top.symbol, "at $", security.last_trade_price, "per share")
 
     // Place order
     let buy = {

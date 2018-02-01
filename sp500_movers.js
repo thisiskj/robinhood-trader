@@ -1,3 +1,8 @@
+//
+// Script to log the S&P 500 top movers (gainers and losers)
+// It will log the results to the storage directory
+//
+
 // Imports
 require('dotenv').config()
 const moment = require('moment');
@@ -5,6 +10,7 @@ const { log, pushLog } = require('./logging')
 const RobinHood = require('robinhood-api');
 const robinhood = new RobinHood();
 const fs = require('fs');
+require('console.table');
 
 // Get S&P 500 Losers
 (async () => {
@@ -29,6 +35,7 @@ const fs = require('fs');
       quote: quote
     })
   }
+  console.table(savemeDown)
 
   const formattedDown = JSON.stringify(savemeDown, null, 4);
   const downFileName = `sp_500_down-${moment().format("YYYY-MM-DD-h:mm:ss-a")}`;
@@ -46,6 +53,7 @@ const fs = require('fs');
       quote: quote
     })
   }
+  console.table(savemeUp)
 
   const formattedUp = JSON.stringify(savemeUp, null, 4);
   const upFileName = `sp_500_up-${moment().format("YYYY-MM-DD-h:mm:ss-a")}`;

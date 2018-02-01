@@ -1,7 +1,8 @@
 const LocalStorage = require('node-localstorage').LocalStorage;
-let localStorage = new LocalStorage('./storage');
+const storageSize = 1024*1024*1024 // 1GB
+const localStorage = new LocalStorage('./storage', storageSize);
 
-function save(key, obj) {
+function set(key, obj) {
   obj = JSON.stringify(obj)
   localStorage.setItem(key, obj)
 }
@@ -16,6 +17,6 @@ function get(key) {
 }
 
 module.exports = {
-  save,
+  set,
   get
 }

@@ -1,3 +1,7 @@
+//
+// This is a test of order.js, will not place any orders
+//
+
 // Imports
 require('dotenv').config()
 const { log, pushLog } = require('./logging')
@@ -7,7 +11,7 @@ const moment = require('moment-timezone');
 
 // Validate username/password exists
 if (!process.env.ROBINHOOD_USERNAME || !process.env.ROBINHOOD_PASSWORD) {
-  pushLog("Robinhood username or password missing")
+  log("Robinhood username or password missing")
   process.exit(1)
 }
 
@@ -25,27 +29,27 @@ if (!process.env.ROBINHOOD_USERNAME || !process.env.ROBINHOOD_PASSWORD) {
     log('Fake Account Buying Power: ', account.buying_power)
 
 
-    // Get S&P 500 Losers
-    log('Getting Top 10 S&P 500 losers...')
+    // Get S&P 500
+    log('Getting Top 10 S&P 500 gainers...')
     let sp500down = await robinhood.getSP500Movers({ direction: 'up' })
     sp500down.results.forEach((res) => { log(res.symbol, res.price_movement.market_hours_last_movement_pct + '%', '$' + res.price_movement.market_hours_last_price) })
 
-    // Get the worst loser
-    let worst = sp500down.results[0]
+    // Get the top
+    let top = sp500down.results[0]
 
-    // Get the current quote data for the worst loser
-    let security = await robinhood.getQuote({ symbol: worst.symbol })
-    log('worst security quote:', security)
+    // Get the current quote data for the top symbol
+    let security = await robinhood.getQuote({ symbol: top.symbol })
+    // log('top security quote:', security)
 
     // See if we have enough money
     if (parseFloat(account.buying_power) < parseFloat(security.bid_price)) {
-      pushLog("Not enough funds ($" + account.buying_power + ") in account to buy " + worst.symbol + " at $" + security.bid_price)
+      log("Not enough funds ($" + account.buying_power + ") in account to buy " + top.symbol + " at $" + security.bid_price)
       return
     }
 
     // Determine how much we want to buy
     let quantity = Math.floor(account.buying_power / security.last_trade_price)
-    log("Attempting to buy", quantity, "shares of", worst.symbol, "at $", security.bid_price, "per share")
+    log("Attempting to buy", quantity, "shares of", top.symbol, "at $", security.last_trade_price, "per share")
 
     // Place order
     let buy = {
@@ -60,9 +64,9 @@ if (!process.env.ROBINHOOD_USERNAME || !process.env.ROBINHOOD_PASSWORD) {
       side: 'buy',
     }
 
-    log("Submitting BUY:", buy)
+    // log("Submitting BUY:", buy)
 
-    pushLog(`Buy of ${security.symbol} has completed for ${security.last_trade_price}`)
+    log(`Buy of ${security.symbol} has completed for ${security.last_trade_price}`)
     await sleep(1000)
 
     // Place sell order at 1% gain
@@ -78,7 +82,7 @@ if (!process.env.ROBINHOOD_USERNAME || !process.env.ROBINHOOD_PASSWORD) {
       side: 'sell',
     }
 
-    log("Submitting SELL:", sell)
+    // log("Submitting SELL:", sell)
 
     log("Now we wait for it to complete, good luck!")
 
@@ -114,9 +118,9 @@ if (!process.env.ROBINHOOD_USERNAME || !process.env.ROBINHOOD_PASSWORD) {
           quantity: quantity,
           side: 'sell',
         }
-        log("Submitting market SELL:", marketSell)
-        log('marketSellOrder:', marketSellOrder)
-        pushLog(`Return is < -1.5%, market sell order placed`)
+        // log("Submitting market SELL:", marketSell)
+        // log('marketSellOrder:', marketSellOrder)
+        log(`Return is < -1.5%, market sell order placed`)
 
         break
       }
