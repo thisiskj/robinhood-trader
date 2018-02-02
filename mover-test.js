@@ -5,6 +5,8 @@ const RobinHood = require('robinhood-api');
 const robinhood = new RobinHood();
 const moment = require('moment-timezone');
 
+let desiredReturnAmount = 1.0
+
 // Validate username/password exists
 if (!process.env.ROBINHOOD_USERNAME || !process.env.ROBINHOOD_PASSWORD) {
   pushLog("Robinhood username or password missing")
@@ -35,7 +37,6 @@ if (!process.env.ROBINHOOD_USERNAME || !process.env.ROBINHOOD_PASSWORD) {
 
     // Get the current quote data for the worst loser
     let security = await robinhood.getQuote({ symbol: worst.symbol })
-    log('worst security quote:', security)
 
     // See if we have enough money
     if (parseFloat(account.buying_power) < parseFloat(security.bid_price)) {
@@ -47,38 +48,8 @@ if (!process.env.ROBINHOOD_USERNAME || !process.env.ROBINHOOD_PASSWORD) {
     let quantity = Math.floor(account.buying_power / security.last_trade_price)
     log("Attempting to buy", quantity, "shares of", worst.symbol, "at $", security.bid_price, "per share")
 
-    // Place order
-    let buy = {
-      account: account.url,
-      instrument: security.instrument,
-      symbol: security.symbol,
-      type: 'limit',
-      time_in_force: 'gtc',
-      trigger: 'immediate',
-      price: security.last_trade_price,
-      quantity: quantity,
-      side: 'buy',
-    }
-
-    log("Submitting BUY:", buy)
-
     pushLog(`Buy of ${security.symbol} has completed for ${security.last_trade_price}`)
     await sleep(1000)
-
-    // Place sell order at 1% gain
-    let sell = {
-      account: account.url,
-      instrument: security.instrument,
-      symbol: security.symbol,
-      type: 'limit',
-      time_in_force: 'gtc',
-      trigger: 'immediate',
-      price: round(security.last_trade_price * 1.01, 2),
-      quantity: quantity,
-      side: 'sell',
-    }
-
-    log("Submitting SELL:", sell)
 
     log("Now we wait for it to complete, good luck!")
 
@@ -91,31 +62,22 @@ if (!process.env.ROBINHOOD_USERNAME || !process.env.ROBINHOOD_PASSWORD) {
       // Get current quote
       let currentSecurity = await robinhood.getQuote({ symbol: security.symbol })
       let currentReturn = (currentSecurity.last_trade_price - security.last_trade_price) / security.last_trade_price * 100
+
+      // take the gains
+      if (currentReturn > desiredReturnAmount ){
+        pushLog(`Congrats you'd have sold your position for a ${currentReturn}`)
+        break
+      }
+
       log(`Current price of ${security.symbol} is $${currentSecurity.last_trade_price} for a return of ${currentReturn}%`)
 
       // If its dropped 1.5%, then bail
       if (currentReturn < -1.50) {
 
-        // Cancel sell order
-        log('Canceled order:', cancel)
-
         // Sleep
         log('Sleeping 10s...')
         await sleep(1000 * 10)
 
-        // Place market sell order
-        let marketSell = {
-          account: account.url,
-          instrument: security.instrument,
-          symbol: security.symbol,
-          type: 'market',
-          time_in_force: 'gtc',
-          trigger: 'immediate',
-          quantity: quantity,
-          side: 'sell',
-        }
-        log("Submitting market SELL:", marketSell)
-        log('marketSellOrder:', marketSellOrder)
         pushLog(`Return is < -1.5%, market sell order placed`)
 
         break
