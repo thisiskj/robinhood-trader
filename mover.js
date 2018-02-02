@@ -15,10 +15,23 @@ if (!process.env.ROBINHOOD_USERNAME || !process.env.ROBINHOOD_PASSWORD) {
   process.exit(1)
 }
 
-(async () => {
+// Read environment variables and create the final configuration
+const config = {
+  robinhood_username: process.env.ROBINHOOD_USERNAME,
+  robinhood_password: process.env.ROBINHOOD_PASSWORD,
+  sell_at_gain_percent: parseFloat(process.env.SELL_AT_GAIN_PERCENT),
+  sell_at_loss_percent: parseFloat(process.env.SELL_AT_LOSS_PERCENT),
+  investment_amount: parseFloat(process.env.INVESTMENT_AMOUNT_USD),
+  testing: process.env.TESTING === 'true',
+  production: process.env.TESTING !== 'true',
+}
+
+log('Running in mode:',  config.testing ? 'test' : 'production')
+
+;(async () => {
   try {
-    log('Logging in as', process.env.ROBINHOOD_USERNAME, '...')
-    let login = await robinhood.login({ username:process.env.ROBINHOOD_USERNAME, password:process.env.ROBINHOOD_PASSWORD})
+    log('Logging in as', config.robinhood_username, '...')
+    let login = await robinhood.login({ username:config.robinhood_username, password:config.robinhood_password})
 
     // let userData = await robinhood.getUserData()
     // log('userData', userData)
@@ -27,6 +40,12 @@ if (!process.env.ROBINHOOD_USERNAME || !process.env.ROBINHOOD_PASSWORD) {
     log('Getting account balances...')
     let accounts = await robinhood.getAccounts()
     let account = accounts.results[0]
+
+    // Get investment amount
+    let investment = account.buying_power
+    if (config.investment_amount) {
+      investment = config.investment_amount
+    }
 
     log('Sleeping 3s...')
     await sleep(3000)
@@ -44,13 +63,13 @@ if (!process.env.ROBINHOOD_USERNAME || !process.env.ROBINHOOD_PASSWORD) {
     log('top security quote:', security)
 
     // See if we have enough money
-    if (parseFloat(account.buying_power) < parseFloat(security.bid_price)) {
-      pushLog("Not enough funds ($" + account.buying_power + ") in account to buy " + top.symbol + " at $" + security.bid_price)
+    if (parseFloat(investment) < parseFloat(security.bid_price)) {
+      pushLog("Not enough ($" + investment + ") to buy " + top.symbol + " at $" + security.bid_price)
       return
     }
 
     // Determine how much we want to buy
-    let quantity = Math.floor(account.buying_power / security.last_trade_price)
+    let quantity = Math.floor(investment / security.last_trade_price)
     log("Attempting to buy", quantity, "shares of", top.symbol, "at $", security.last_trade_price, "per share")
 
     // Place order
@@ -66,22 +85,28 @@ if (!process.env.ROBINHOOD_USERNAME || !process.env.ROBINHOOD_PASSWORD) {
       side: 'buy',
     }
     log("Submitting BUY:", buy)
-    let buyOrder = await robinhood.placeOrder(buy)
-    log('buyOrder:', buyOrder)
 
-    // Wait for buy to complete
-    let o
-    do {
-      log('Waiting for BUY to complete...')
-      await sleep(1000)
-      o = await robinhood.getOrder({ order_id: buyOrder.id })
-      log('order:', o)
-    } while (o.state != 'filled');
+    if (config.production) {
+      let buyOrder = await robinhood.placeOrder(buy)
+      log('buyOrder:', buyOrder)
+
+      // Wait for buy to complete
+      let o
+      do {
+        log('Waiting for BUY to complete...')
+        await sleep(1000)
+        o = await robinhood.getOrder({ order_id: buyOrder.id })
+        log('order:', o)
+      } while (o.state != 'filled');
+    } else {
+      log('We are in test mode, faking a successful buy order')
+    }
 
     pushLog(`Buy of ${security.symbol} has completed for ${security.last_trade_price}`)
     await sleep(1000)
 
     // Place sell order at 1% gain
+    let factor = (config.sell_at_gain_percent * .01) + 1
     let sell = {
       account: account.url,
       instrument: security.instrument,
@@ -89,13 +114,19 @@ if (!process.env.ROBINHOOD_USERNAME || !process.env.ROBINHOOD_PASSWORD) {
       type: 'limit',
       time_in_force: 'gtc',
       trigger: 'immediate',
-      price: round(security.last_trade_price * 1.01, 2),
+      price: round(security.last_trade_price * factor, 2),
       quantity: quantity,
       side: 'sell',
     }
     log("Submitting SELL:", sell)
-    let sellOrder = await robinhood.placeOrder(sell)
-    log('sellOrder:', sellOrder)
+
+    let sellOrder
+    if (config.production) {
+      sellOrder = await robinhood.placeOrder(sell)
+      log('sellOrder:', sellOrder)
+    } else {
+      log('In testing mode, submitting fake sell order')
+    }
 
     log("Now we wait for it to complete, good luck!")
 
@@ -105,13 +136,15 @@ if (!process.env.ROBINHOOD_USERNAME || !process.env.ROBINHOOD_PASSWORD) {
 
       let now = moment().tz("America/New_York").format('H:mm');
 
-      let s = await robinhood.getOrder({ order_id: sellOrder.id })
-      log(s)
-      log('Sell order status is', s.state)
+      if (config.production) {
+        let s = await robinhood.getOrder({ order_id: sellOrder.id })
+        log(s)
+        log('Sell order status is', s.state)
 
-      if (s.state == 'filled') {
-        pushLog(`Sell order for 1% gain has been filled, congrats!`)
-        break
+        if (s.state == 'filled') {
+          pushLog(`Sell order for 1% gain has been filled, congrats!`)
+          break
+        }
       }
 
       // Get current quote
@@ -120,31 +153,34 @@ if (!process.env.ROBINHOOD_USERNAME || !process.env.ROBINHOOD_PASSWORD) {
       log(`Current price of ${security.symbol} is $${currentSecurity.last_trade_price} for a return of ${currentReturn}%`)
 
       // If its dropped 1.5%, then bail
-      if (currentReturn < -1.50) {
+      if (currentReturn < config.sell_at_loss_percent) {
 
-        // Cancel sell order
-        let cancel = await robinhood.cancelOrder({ order_id: sellOrder.id })
-        log('Canceled order:', cancel)
+        if (config.production) {
+          // Cancel sell order
+          let cancel = await robinhood.cancelOrder({ order_id: sellOrder.id })
+          log('Canceled order:', cancel)
 
-        // Sleep
-        log('Sleeping 10s...')
-        await sleep(1000 * 10)
+          // Sleep
+          log('Sleeping 10s...')
+          await sleep(1000 * 10)
 
-        // Place market sell order
-        let marketSell = {
-          account: account.url,
-          instrument: security.instrument,
-          symbol: security.symbol,
-          type: 'market',
-          time_in_force: 'gtc',
-          trigger: 'immediate',
-          quantity: quantity,
-          side: 'sell',
+          // Place market sell order
+          let marketSell = {
+            account: account.url,
+            instrument: security.instrument,
+            symbol: security.symbol,
+            type: 'market',
+            time_in_force: 'gtc',
+            trigger: 'immediate',
+            quantity: quantity,
+            side: 'sell',
+          }
+          log("Submitting market SELL:", marketSell)
+          let marketSellOrder = await robinhood.placeOrder(marketSell)
+          log('marketSellOrder:', marketSellOrder)
         }
-        log("Submitting market SELL:", marketSell)
-        let marketSellOrder = await robinhood.placeOrder(marketSell)
-        log('marketSellOrder:', marketSellOrder)
-        pushLog(`Return is < -1.5%, market sell order placed`)
+
+        pushLog(`Return is < ${config.sell_at_loss_percent}%, market sell order placed`)
 
         break
       }
