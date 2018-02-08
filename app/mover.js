@@ -108,7 +108,7 @@ class Mover {
       log('We are in test mode, faking a successful buy order')
     }
 
-    pushLog(`Buy of ${security.symbol} has completed for ${averagePrice}`)
+    pushLog(`${this.config.testing ? 'Test Mode: ' : ''}Buy of ${security.symbol} has completed for ${averagePrice}`)
     await this.sleep(1000)
 
     // Place sell order at 1% gain
@@ -157,6 +157,11 @@ class Mover {
       let currentSecurity = await robinhood.getQuote({ symbol: security.symbol })
       let currentReturn = (currentSecurity.last_trade_price - averagePrice) / averagePrice * 100
       log(`Current price of ${security.symbol} is $${currentSecurity.last_trade_price} for a return of ${currentReturn}% (Purchased at $${averagePrice})`)
+
+      if (this.config.testing && currentReturn >= this.config.sell_at_gain_percent) {
+        pushLog(`Test Mode: Sell order for 1% gain would have ben filled.`)
+        break
+      }
 
       // If its dropped, then bail
       if (currentReturn < this.config.sell_at_loss_percent) {
