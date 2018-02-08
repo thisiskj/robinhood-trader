@@ -21,12 +21,12 @@ PUSHOVER_TOKEN=yyy
 Once the .env file is configured, proceed...
 ```
 npm install
-node mover.js
+node index.js
 ```
 
 Alternatively just supply the environment variables on the command line:
 ```
-ROBINHOOD_USERNAME=xxx@aaa.com ROBINHOOD_PASSWORD=yourpassword SELL_AT_GAIN_PERCENT=1.0 node mover.js
+ROBINHOOD_USERNAME=xxx@aaa.com ROBINHOOD_PASSWORD=yourpassword SELL_AT_GAIN_PERCENT=1.0 node index.js
 ```
 ## Docker Setup
 
