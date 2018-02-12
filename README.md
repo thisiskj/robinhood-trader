@@ -32,12 +32,12 @@ ROBINHOOD_USERNAME=xxx@aaa.com ROBINHOOD_PASSWORD=yourpassword SELL_AT_GAIN_PERC
 
 Build Docker Container
 ```
-docker build . -t testrobinhood
+docker build . -t robinhoodtrader
 ```
 
 Run Docker Container
 ```
-docker run -e ROBINHOOD_USERNAME=you@example.com -e ROBINHOOD_PASSWORD=password -e SELL_AT_GAIN_PERCENT=1.0 mover.js
+docker run --env-file [path_to_local_env_file] robinhoodtrader node index.js
 ```
 
 ## Strategies
