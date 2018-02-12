@@ -2,8 +2,16 @@
 
 Setup a `.env` file
 ```
+
+# Required
 ROBINHOOD_USERNAME=you@example.com
 ROBINHOOD_PASSWORD=password
+
+# Parameters for the mover.js strategy
+TESTING=true
+SELL_AT_GAIN_PERCENT=1.0
+SELL_AT_LOSS_PERCENT=-1.5
+INVESTMENT_AMOUNT_USD=1000
 
 # Optional for pushover notifications
 PUSHOVER_USER=xxx
@@ -13,30 +21,26 @@ PUSHOVER_TOKEN=yyy
 Once the .env file is configured, proceed...
 ```
 npm install
-node order.js
+node index.js
 ```
-## Alternative Docker Setup
+
+Alternatively just supply the environment variables on the command line:
+```
+ROBINHOOD_USERNAME=xxx@aaa.com ROBINHOOD_PASSWORD=yourpassword SELL_AT_GAIN_PERCENT=1.0 node index.js
+```
+## Docker Setup
 
 Build Docker Container
 ```
-docker build . -t testrobinhood 
+docker build . -t testrobinhood
 ```
 
 Run Docker Container
 ```
-docker run -e ROBINHOOD_USERNAME=you@example.com -e ROBINHOOD_PASSWORD=password testrobinhood
+docker run -e ROBINHOOD_USERNAME=you@example.com -e ROBINHOOD_PASSWORD=password -e SELL_AT_GAIN_PERCENT=1.0 mover.js
 ```
 
-## Process
-
+## Strategies
 **Warning: This is a Work In Progress, use at your own risk**
-
-### Step 1: Place Order
-You should run at 9:31am EST
-
-1. Find best performing stock
-1. Get account balance
-1. Buy it
-1. Wait for buy order to complete
-1. Place sell order at 1% gain
-1. Watch the price and if we see a -1.5% loss, sumbit a market sell order
+1. mover.js - Play the early morning jump on the best performing stock on the S&P500 from yesterday.
+2. earnings.js - Play the excitement on the best estimate vs. actual eps on a stocks earnings release today.

@@ -23,28 +23,39 @@ if (!process.env.ROBINHOOD_USERNAME || !process.env.ROBINHOOD_PASSWORD) {
     log('Getting account balances...')
     let accounts = await robinhood.getAccounts()
     let account = accounts.results[0]
+    log('Real Account Buying Power: ', account.buying_power)
 
     // Get S&P 500 Losers
     log('Getting Top 10 S&P 500 losers...')
-    let sp500down = await robinhood.getSP500Movers({ direction: 'up' })
-    sp500down.results.forEach((res) => { log(res.symbol, res.price_movement.market_hours_last_movement_pct + '%', '$' + res.price_movement.market_hours_last_price) })
+    let earners = await robinhood.getCompaniesReportingEarningsWithin({range: 1})
 
-    // Get the worst loser
-    let worst = sp500down.results[0]
+    log(earners.results)
 
-    // Get the current quote data for the worst loser
-    let security = await robinhood.getQuote({ symbol: worst.symbol })
-    log('worst security quote:', security)
+    // only get the positive actual earners
+    let potentialEarner = []
+    earners.results.forEach(function(res) {
+      if (res.eps.actual != null && res.eps.estimate != null) {
+        if ( (res.eps.actual - res.eps.estimate) > 0){
+          var diff = res.eps.actual - res.eps.estimate
+          potentialEarner.push([diff, res.symbol])
+        }
+      }
+    });
+
+    potentialEarner.sort()
+    var biggestGainer = potentialEarner[potentialEarner.length-1]
+    log('biggest earner: ', biggestGainer[1], biggestGainer[0])
+    let security = await robinhood.getQuote({symbol: biggestGainer[1]})
 
     // See if we have enough money
     if (parseFloat(account.buying_power) < parseFloat(security.bid_price)) {
-      pushLog("Not enough funds ($" + account.buying_power + ") in account to buy " + worst.symbol + " at $" + security.bid_price)
+      pushLog("Not enough funds ($" + account.buying_power + ") in account to buy " + security.symbol + " at $" + security.bid_price)
       return
     }
 
     // Determine how much we want to buy
     let quantity = Math.floor(account.buying_power / security.last_trade_price)
-    log("Attempting to buy", quantity, "shares of", worst.symbol, "at $", security.bid_price, "per share")
+    log("Attempting to buy", quantity, "shares of", security.symbol, "at $", security.bid_price, "per share")
 
     // Place order
     let buy = {
@@ -74,7 +85,10 @@ if (!process.env.ROBINHOOD_USERNAME || !process.env.ROBINHOOD_PASSWORD) {
     pushLog(`Buy of ${security.symbol} has completed for ${security.last_trade_price}`)
     await sleep(1000)
 
-    // Place sell order at 1% gain
+    // Place sell order at X% gain
+    var returnPercent = (process.env.DESIRED_RETURN + 100) / 100
+
+
     let sell = {
       account: account.url,
       instrument: security.instrument,
@@ -82,7 +96,7 @@ if (!process.env.ROBINHOOD_USERNAME || !process.env.ROBINHOOD_PASSWORD) {
       type: 'limit',
       time_in_force: 'gtc',
       trigger: 'immediate',
-      price: round(security.last_trade_price * 1.01, 2),
+      price: round(security.last_trade_price * returnPercent, 2),
       quantity: quantity,
       side: 'sell',
     }
