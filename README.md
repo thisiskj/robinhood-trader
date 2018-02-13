@@ -11,6 +11,7 @@ ROBINHOOD_PASSWORD=password
 TESTING=true
 SELL_AT_GAIN_PERCENT=1.0
 SELL_AT_LOSS_PERCENT=-1.5
+SELL_AT_LOSS_COUNT=1  # Determines how many times a stock price needs to be below SELL_AT_LOSS_PERCENT before stock is sold
 INVESTMENT_AMOUNT_USD=1000
 
 # Optional for pushover notifications
