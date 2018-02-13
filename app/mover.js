@@ -23,6 +23,7 @@ class Mover {
     this.config = {
       sell_at_gain_percent: parseFloat(process.env.SELL_AT_GAIN_PERCENT),
       sell_at_loss_percent: parseFloat(process.env.SELL_AT_LOSS_PERCENT),
+      sell_at_loss_count: parseFloat(process.env.SELL_AT_LOSS_COUNT) || 1,
       investment_amount: parseFloat(process.env.INVESTMENT_AMOUNT_USD),
       testing: process.env.TESTING === 'true',
       production: process.env.TESTING !== 'true',
@@ -135,7 +136,7 @@ class Mover {
     }
 
     log("Now we wait for it to complete, good luck!")
-
+    let sell_at_loss_count = 0
     do {
       log('Sleeping for 10s...')
       await this.sleep(1000 * 10)
@@ -165,6 +166,11 @@ class Mover {
 
       // If its dropped, then bail
       if (currentReturn < this.config.sell_at_loss_percent) {
+        sell_at_loss_count++
+        if (sell_at_loss_count < this.config.sell_at_loss_count) {
+          log(" loss occured ", sell_at_loss_count, "out of", this.config.sell_at_loss_count, "allowed")
+          continue
+        }
 
         if (this.config.production) {
           // Cancel sell order
@@ -194,6 +200,8 @@ class Mover {
         pushLog(`Return is < ${this.config.sell_at_loss_percent}%, market sell order placed`)
 
         break
+      } else {
+        sell_at_loss_count = 0
       }
     } while (true)
 
